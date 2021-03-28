@@ -29,3 +29,6 @@ Utilies and Output:
 In the utlities section there is currently only one option, that being a short cut for toggleing the system console.
 **The system console is where all outputs are found**.
 Once this is open you will see the output of all the operaitions you have carried out, or any errors that have occured while trying to generate them.
+
+Output formating:
+All of the output arrays are formated to be ready to use in GeoFS out of the box. There should be no issues with parts being in the wrong possition or please report the issue.
