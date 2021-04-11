@@ -12,12 +12,12 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 bl_info = {
-    "name" : "Collision Addon",
+    "name" : "GeoFS Utilities",
     "author" : "A Name",
-    "description" : "",
-    "blender" : (2, 80, 0),
-    "version" : (0, 1, 1),
-    "location" : "View3D > Sidebar > Geo Collisions",
+    "description" : "Adds several different utilites for GeoFS aircraft developmet",
+    "blender" : (2, 92, 0),
+    "version" : (0, 2, 0),
+    "location" : "View3D > Sidebar > GeoFS Util",
     "warning" : "",
     "category" : "Generic"
 }
@@ -64,16 +64,46 @@ class MySettings(PropertyGroup):
         min = 0,
         max = 5
         )
+    lightType : EnumProperty(
+        name="Type",
+        items=(
+            ('none', 'Navigaition', 'Navigation light that is always on'),
+            ('night', 'Navigaition Night', 'Navigation light that is on at night'),
+            ('strobe1', 'Stobe 1', 'Strobe light that '),
+            ('strobe2', 'Strobe 2', 'Strobe light that'),
+            ('strobe3', 'Strobe 3', 'Strobe light that'),
+        )
+        )
+    lightColour : EnumProperty(
+        name="Name:",
+        items=(
+            ('red', 'Red', 'Sets the light colour to red'),
+            ('green', 'Green', 'Sets the light colour to green'),
+            ('white', 'White', 'Sets the light colour to white'),
+        )
+        )
+    lightName : StringProperty(
+        name="Name",
+        default="untitled"
+        )
+    lightRoundDpProp : IntProperty(
+        name = "Light Rounding Decimal Place",
+        description="Sets the decimal place for rounding(0 = integer, 5 = 5 decimal places) for the light",
+        default = 2,
+        min = 0,
+        max = 5
+        )
 
 #UI panel
 from bpy.types import Panel
 class Main_panel:
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
-    bl_category = "Geo Collisions"
+    bl_category = "GeoFS Utils"
 class GCOL_PT_Panel_Parent(Main_panel, Panel):
     bl_idname = "GCOL_PT_Panel_Parent"
     bl_label = "Collisions"
+    bl_options = {"DEFAULT_CLOSED"}
     def draw(self, context):
         layout = self.layout
 class GCOL_PT_Panel_Col(Main_panel,Panel):
@@ -115,9 +145,33 @@ class GCOL_PT_Panel_Gear(Main_panel,Panel):
         col.prop(scene, "gearCollection", text="Gear Point Collection")
         #Draw gear rouding selector
         layout.prop(mytool, "gearRoundDpProp", text="Rounding D.P.")
+class GCOL_PT_Panel_Lights(Main_panel,Panel):
+    bl_idname = "GCOL_PT_Panel_Lights"
+    bl_label = "Lights"
+    bl_options = {"DEFAULT_CLOSED"}
+
+    def draw(self,context):
+        layout = self.layout
+        scene = context.scene
+        mytool = scene.my_tool
+
+        #Draw generate button
+        row = layout.row()
+        col = row.column()
+        col.operator("object.get_light", text = "Generate Light", icon = "PLUS")
+        #Draw settings
+        row = layout.row()
+        layout.prop(mytool, "lightName", text="Name")
+        row = layout.row()
+        layout.prop(scene, "selectLight", text="Location")
+        layout.prop(mytool, "lightRoundDpProp", text="Rounding D.P.")
+        row = layout.row()
+        layout.prop(mytool, "lightType", text="Type")
+        layout.prop(mytool, "lightColour", text="Colour")
 class GCOL_PT_Panel_Util(Main_panel,Panel):
     bl_idname = "GCOL_PT_Panel_Utils"
     bl_label = "Utilities"
+    bl_options = {"DEFAULT_CLOSED"}
 
     def draw(self, context):
         
@@ -125,6 +179,16 @@ class GCOL_PT_Panel_Util(Main_panel,Panel):
         scene = context.scene
         mytool = scene.my_tool
         #Draw Console Toggle
+        row = layout.row()
+        col = row.column()
+        col.operator("object.extra_smooth", text = "Shade Smooth")
+        col = row.column()
+        col.operator("object.merge_by_distance", text = "Remove Duplicates")
+        row = layout.row()
+        col = row.column()
+        col.operator("object.extra_smooth", text = "Apply all Modifiers")
+        col = row.column()
+        col.operator("object.extra_smooth", text = "Remove all Modifiers")
         row = layout.row()
         col = row.column()
         col.operator("object.toggle_console", text = "Toggle Output Console", icon = "CONSOLE")
@@ -244,6 +308,42 @@ class GCOL_OT_Gen_GearCollisions(Operator):
                         print(f'\"collisionPoints\": [[{cLocX},{cLocY},{cLocZ}]], \n')
                     
         return{'FINISHED'}
+#Light Generator
+class GCOL_OT_Gen_Light(Operator):
+    """Generates one light form the current settings"""
+    bl_idname = "object.get_light"
+    bl_label = "Generates a section of code for a light"
+
+    def execute(self, context):
+
+        locObj = context.scene.selectLight
+        if locObj == None:
+            print("No location object selected")
+            return{'FINISHED'}
+
+        lName = context.scene.my_tool.lightName
+        roundDp = context.scene.my_tool.lightRoundDpProp
+        lType = context.scene.my_tool.lightType
+        lColour = context.scene.my_tool.lightColour
+
+        lLocX = round(-locObj.location[1], roundDp)
+        lLocY = round(locObj.location[0],roundDp)
+        lLocZ = round(locObj.location[2],roundDp)
+        
+        print("{")
+        print(f'\"name\":\"{lName}\",')
+        print(f'\"light\":\"{lColour}\"')
+        
+        if lType == 'none':
+            print("\"animations\": \"\",")
+        else:
+            print("\"animations\": [")
+            print("{",f'"type": "show", "value": "{lType}"',"}")
+            print("],")
+        
+        print(f'\"position\": [{lLocX},{lLocY},{lLocZ}]')
+        print("},")
+        return{'FINISHED'}
 #Operator for toggeling the console
 class GCOL_OT_toggle_console(Operator):
     """Toggles the system console"""
@@ -255,9 +355,72 @@ class GCOL_OT_toggle_console(Operator):
         bpy.ops.wm.console_toggle()
 
         return{'FINISHED'}
+#Shade smooth operator
+class GCOL_OT_shadeSmooth(Operator):
+    """Shades object smooth and enables auto-smooth"""
+    bl_idname = "object.extra_smooth"
+    bl_label = "Applies auto-smooth and shade smooth"
+
+    @classmethod
+    def poll(cls, context):
+        selectObj = bpy.context.object
+
+        if selectObj is not None:
+            if selectObj.mode == "OBJECT":
+                return True
+
+        return False
+
+    def execute(self, context):
+        activeObj = bpy.context.selected_objects
+        activeObjName = bpy.context.active_object.name
+
+        for obj in activeObj:
+            if obj.name != activeObjName:
+                obj.select_set(False)
+
+        bpy.ops.object.shade_smooth()
+        bpy.context.object.data.use_auto_smooth = True
+        return{'FINISHED'}
+#Remove Dupliactes
+class GCOL_OT_removeDoubles(Operator):
+    """Removes duplicate vertices by mergiving vertisies by distance"""
+    bl_idname = "object.merge_by_distance"
+    bl_label = "Shortcut to merge by distance"
+
+    @classmethod
+    def poll(cls, context):
+        selectObj = bpy.context.object
+
+        if selectObj is not None:
+            if selectObj.mode == "EDIT":
+                return True
+
+        return False
+
+    def execute(self, context):
+        
+        bpy.ops.mesh.select_all(action='SELECT')
+        bpy.ops.mesh.remove_doubles()
+        bpy.ops.mesh.select_all(action='DESELECT')
+
+        return{'FINISHED'}
+
 
 #Registering all of the classes
-classes = (GCOL_OT_Gen_MainCollisions, MySettings, GCOL_OT_toggle_console, GCOL_OT_Gen_GearCollisions, GCOL_PT_Panel_Parent, GCOL_PT_Panel_Col, GCOL_PT_Panel_Gear, GCOL_PT_Panel_Util)
+classes = (
+    GCOL_OT_Gen_MainCollisions, 
+    MySettings, 
+    GCOL_OT_toggle_console, 
+    GCOL_OT_Gen_GearCollisions,
+    GCOL_OT_Gen_Light,
+    GCOL_OT_shadeSmooth,
+    GCOL_OT_removeDoubles, 
+    GCOL_PT_Panel_Parent, 
+    GCOL_PT_Panel_Col, 
+    GCOL_PT_Panel_Gear,
+    GCOL_PT_Panel_Lights, 
+    GCOL_PT_Panel_Util)
 
 def register():
     
@@ -267,6 +430,7 @@ def register():
     bpy.types.Scene.my_tool = PointerProperty(type=MySettings)
     bpy.types.Scene.collisionCollection = PointerProperty(type=bpy.types.Collection, name="Collision Point Collection", description="Collection from which the collisions are found")
     bpy.types.Scene.gearCollection = PointerProperty(type=bpy.types.Collection, name="Gear Point Collection", description="Collection from which the gear possitions/collisions are found")
+    bpy.types.Scene.selectLight = PointerProperty(type=bpy.types.Object, name="Light Possition", description="Object from which the locaition of the light is found")
 
 def unregister():
     for c in classes:
@@ -275,3 +439,4 @@ def unregister():
     del bpy.types.Scene.my_tool
     del bpy.types.Scene.gearCollection
     del bpy.types.Scene.collisionCollection
+    del bpy.types.Scene.selectLight
