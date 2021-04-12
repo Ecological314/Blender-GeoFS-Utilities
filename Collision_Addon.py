@@ -16,7 +16,7 @@ bl_info = {
     "author" : "A Name",
     "description" : "Adds several different utilites for GeoFS aircraft developmet",
     "blender" : (2, 92, 0),
-    "version" : (0, 2, 0),
+    "version" : (0, 2, 1),
     "location" : "View3D > Sidebar > GeoFS Util",
     "warning" : "",
     "category" : "Generic"
@@ -75,7 +75,7 @@ class MySettings(PropertyGroup):
         )
         )
     lightColour : EnumProperty(
-        name="Name:",
+        name="Type",
         items=(
             ('red', 'Red', 'Sets the light colour to red'),
             ('green', 'Green', 'Sets the light colour to green'),
@@ -93,6 +93,46 @@ class MySettings(PropertyGroup):
         min = 0,
         max = 5
         )
+    instrumentType : EnumProperty(
+        name="Type",
+        items=(
+            ('attitude', 'Artifical Horizon GA', 'General Aviaition artifical horizon'),
+            ('attitude-jet', 'Artifical Horizon Jet 1', 'Jet Aircraft artifical horizon, first style'),
+            ('attitude-jet2', 'Artifical Horizon Jet 2', 'Jet Aircraft artifical horizon, second style'),
+            ('altimeter', 'Altimeter', 'General Aviaition artifical horizon'),
+            ('ias', 'IAS GA', 'General Aviaition IAS gauge'),
+            ('ias-high', 'IAS', 'Normal jet aircraft IAS guage'),
+            ('ias-supersonic', 'IAS Supersonic', 'Supersonic aircraft IAS guage'),
+            ('compass', 'Compass', 'Standard compass/heading indicator'),
+            ('vario', 'V-Speed 2000', 'Standard max 2000fpm(+/-) vertical speed indicator'),
+            ('vario-high', 'V-Speed 6000', 'Standard max 6000fpm(+/-) vertical speed indicator'),
+            ('rpm', 'RPM Prop', 'RPM gauge up to 8000rpm usually for prop aircraft'),
+            ('rpm-jet', 'RPM Jet', 'RPM gauge up to 10000rpm usually for jet aircraft'),
+            ('turn-coordinator', 'Turn Coordinator', 'Standard turn and slip indicator'),
+            ('gmeter', 'G Meter', 'Indicator for the current G Forces'),
+            ('compassball', 'Compass Ball', 'Compassball that indicats heading'),
+            ('manifold', 'Manifold', 'Indicates manifold pressure and fuel flow'),
+            ('oil', 'Oil Gauge', 'Indicates oil presure and temperature'),
+        )
+        )
+    instrumentName : StringProperty(
+        name="Name",
+        default="untitled"
+        )
+    instRoundDpProp : IntProperty(
+        name = "Light Rounding Decimal Place",
+        description="Sets the decimal place for rounding(0 = integer, 5 = 5 decimal places) for the instrument",
+        default = 2,
+        min = 0,
+        max = 5
+        )
+    instScaleProp : FloatProperty(
+            name = "Instrument Scale",
+            description = "Sets the scale of the instrument",
+            default = 1,
+            min = 0.2,
+            max = 5
+            )
 
 #UI panel
 from bpy.types import Panel
@@ -126,7 +166,7 @@ class GCOL_PT_Panel_Col(Main_panel,Panel):
         layout.prop(mytool, "x_symmetry", text="X Symmetry")
         #Draw rounding and threshold selectors
         layout.prop(mytool, "roundDpProp", text="Rounding D.P.")
-        layout.prop(mytool, "mirrorThreshProp", text="Mirror Threshold")    
+        layout.prop(mytool, "instScaleProp", text="Mirror Threshold")    
 class GCOL_PT_Panel_Gear(Main_panel,Panel):
     bl_parent_id = "GCOL_PT_Panel_Parent"
     bl_label = "Gear Collisions"
@@ -168,6 +208,30 @@ class GCOL_PT_Panel_Lights(Main_panel,Panel):
         row = layout.row()
         layout.prop(mytool, "lightType", text="Type")
         layout.prop(mytool, "lightColour", text="Colour")
+class GCOL_PT_Panel_Instruments(Main_panel,Panel):
+    bl_idname = "GCOL_PT_Panel_Instruments"
+    bl_label = "Instruments"
+    bl_options = {"DEFAULT_CLOSED"}
+
+    def draw(self,context):
+        layout = self.layout
+        scene = context.scene
+        mytool = scene.my_tool
+
+        #Draw generate button
+        row = layout.row()
+        col = row.column()
+        col.operator("object.get_instrument", text = "Generate Instrument", icon = "PLUS")
+        #Draw settings
+        row = layout.row()
+        layout.prop(mytool, "instrumentName", text="Name")
+        row = layout.row()
+        layout.prop(scene, "selectInst", text="Location")#Locaition object picture
+        layout.prop(mytool, "instRoundDpProp", text="Rounding D.P.")
+        row = layout.row()
+        layout.prop(mytool, "instrumentType", text="Type")
+        layout.prop(mytool, "instScaleProp", text="Scale")
+        layout.label(text = "Rotations not supported")
 class GCOL_PT_Panel_Util(Main_panel,Panel):
     bl_idname = "GCOL_PT_Panel_Utils"
     bl_label = "Utilities"
@@ -332,7 +396,7 @@ class GCOL_OT_Gen_Light(Operator):
         
         print("{")
         print(f'\"name\":\"{lName}\",')
-        print(f'\"light\":\"{lColour}\"')
+        print(f'\"light\":\"{lColour}\",')
         
         if lType == 'none':
             print("\"animations\": \"\",")
@@ -342,6 +406,37 @@ class GCOL_OT_Gen_Light(Operator):
             print("],")
         
         print(f'\"position\": [{lLocX},{lLocY},{lLocZ}]')
+        print("},")
+        return{'FINISHED'}
+#Instrument Generator
+class GCOL_OT_Gen_Instrument(Operator):
+    """Generates instrumentn code from the selected settings"""
+    bl_idname = "object.get_instrument"
+    bl_label = "Generates a section of code for a instrument"
+
+    def execute(self, context):
+
+        locObj = context.scene.selectInst
+        if locObj == None:
+            print("No location object selected")
+            return{'FINISHED'}
+
+        instName = context.scene.my_tool.instrumentName
+        roundDp = context.scene.my_tool.instRoundDpProp
+        instType = context.scene.my_tool.instrumentType
+        instScale = round(context.scene.my_tool.instScaleProp, roundDp)
+
+        lLocX = round(-locObj.location[1], roundDp)
+        lLocY = round(locObj.location[0],roundDp)
+        lLocZ = round(locObj.location[2],roundDp)
+        
+        print("{")
+        print(f'\"name\":\"{instName}\",')
+        print(f'\"include\":\"3d-{instType}\",')
+        print("\"type\": \"none\",")
+        print(f'\"position\": [{lLocX},{lLocY},{lLocZ}],')
+        print("\"rotation\":[0, 0, 0],")
+        print(f'\"scale\": [{instScale}, {instScale}, {instScale}]')
         print("},")
         return{'FINISHED'}
 #Operator for toggeling the console
@@ -414,12 +509,14 @@ classes = (
     GCOL_OT_toggle_console, 
     GCOL_OT_Gen_GearCollisions,
     GCOL_OT_Gen_Light,
+    GCOL_OT_Gen_Instrument,
     GCOL_OT_shadeSmooth,
     GCOL_OT_removeDoubles, 
     GCOL_PT_Panel_Parent, 
     GCOL_PT_Panel_Col, 
     GCOL_PT_Panel_Gear,
-    GCOL_PT_Panel_Lights, 
+    GCOL_PT_Panel_Lights,
+    GCOL_PT_Panel_Instruments, 
     GCOL_PT_Panel_Util)
 
 def register():
@@ -431,6 +528,7 @@ def register():
     bpy.types.Scene.collisionCollection = PointerProperty(type=bpy.types.Collection, name="Collision Point Collection", description="Collection from which the collisions are found")
     bpy.types.Scene.gearCollection = PointerProperty(type=bpy.types.Collection, name="Gear Point Collection", description="Collection from which the gear possitions/collisions are found")
     bpy.types.Scene.selectLight = PointerProperty(type=bpy.types.Object, name="Light Possition", description="Object from which the locaition of the light is found")
+    bpy.types.Scene.selectInst = PointerProperty(type=bpy.types.Object, name="Instrument Possition", description="Object from which the locaition of the light is found")
 
 def unregister():
     for c in classes:
@@ -440,3 +538,4 @@ def unregister():
     del bpy.types.Scene.gearCollection
     del bpy.types.Scene.collisionCollection
     del bpy.types.Scene.selectLight
+    del bpy.types.Scene.selectInst
