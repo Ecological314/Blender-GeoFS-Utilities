@@ -9,6 +9,7 @@ This addon is installed like any other downloaded blender addon. If you do not k
 4) Find the python file that you previously downloaded and select it, then select "Install Add-on"
 5) Blender should automatically display the addon in the addon selector, but if you do not see it, search for "Collision Addon"
 6) Enable the addon by ticking the tick box
+
 The Addon should now be enabled
 
 # How to use the addon:
