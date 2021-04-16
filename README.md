@@ -1,5 +1,5 @@
 # Blender-GeoFS-Utilities
-A collection of blender addons to aid with aircraft development in GeoFS.
+A collection of blender tools to aid with aircraft development in GeoFS.
 
 # How to install the addon:
 This addon is installed like any other downloaded blender addon. If you do not know how to do this, please follow these steps:
