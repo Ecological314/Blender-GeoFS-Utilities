@@ -4,40 +4,40 @@ A collection of blender tools to aid with aircraft development in GeoFS.
 # How to install the addon:
 This addon is installed like any other downloaded blender addon. If you do not know how to do this, please follow these steps:
 1) Download and save the python file
-2) Open blender and find the addon section in the preferences(Edit > Preferences > Addons)
+2) Open blender and find the addon section in the preferences (Edit > Preferences > Addons)
 3) Select the install option in the top right corner of the window
 4) Find the python file that you previously downloaded and select it, then select "Install Add-on"
 5) Blender should automatically display the addon in the addon selector, but if you do not see it, search for "Collision Addon"
 6) Enable the addon by ticking the tick box
 
-The Addon should now be enabled
+The Addon should now be enabled.
 
 # How to use the addon:
-The use of the addon is quite self explanatory however here is a short quite on it's basic use:
+The use of the addon is quite self-explanatory however here is a short quite on it's basic use:
 
-First of all: This addon assumes that your plane is possitioned in such a way that it is the correct rotaition for GeoFS. THis means that the possitive X axis is the forward direction.
+First of all: This addon assumes that your plane is positioned in such a way that it is the correct rotation for GeoFS. This means that the positive X axis is the forward direction.
 
-The main panel is found in the main workspace in the side bar. The tab in which it is found is labled:"Geo Collisions".
+The main panel is found in the main workspace in the side bar. The tab in which it is found is named: "GeoFS Util".
 The collision section of this tab is split into two main sections; Main collisions and Gear collisions.
 
 Main collisions:
-To generate the main collision points, you first need to select the collection in which all of the points are defined. In this collection there should only be objects that are possitioned where a collision point will be. Using empties for this is recomended. The script will look at all objects in this collection so even if they are not intended to be in the possition of the collision point, they will be mirrored.
-The "X symmetry" option will mirror any point that outside of the "Mirror Threshold" in the possitive or negative. This is only done for one axis, that axis being the =/- Y axis in blender, and the +/- X axis in GeoFS. This corresponds to left/right viewed from the back of the plane. The threshold can be set to any number between 0.005 and 1.5, any points in this range will not be mirrored(only applies for the mirror axis), which is done to avoid mirroring points in the center of the plane which are usually only needed once. 
-  The "Rounding D.P." value determines to how many decimal places the output values are rounded. This ranges from 0 to 5, 0 resulting in rouding to the nearest whole number and 5 leading to the values being rounded to 5 decimal places. For the output, see the output section.
+To generate the main collision points, you first need to select the collection in which all of the points are defined. In this collection there should only be objects that are positioned where a collision point will be. Using empties for this is recommended. The script will look at all objects in this collection so even if they are not intended to be in the position of the collision point, they will be mirrored.
+The "X symmetry" option will mirror any point that outside of the "Mirror Threshold" in the positive or negative. This is only done for one axis, that axis being the =/- Y axis in blender, and the +/- X axis in GeoFS. This corresponds to left/right viewed from the back of the plane. The threshold can be set to any number between 0.005 and 1.5, any points in this range will not be mirrored(only applies for the mirror axis), which is done to avoid mirroring points in the centre of the plane which are usually only needed once. 
+  The "Rounding D.P." value determines to how many decimal places the output values are rounded. This ranges from 0 to 5, 0 resulting in rounding to the nearest whole number and 5 leading to the values being rounded to 5 decimal places. For the output, see the output section.
 
 Gear Collisions:
-This is mostly the same as the previous section however there is no option for mirroring. The collection selection and "Rounding D.P" functions identiacally to the previous section. The main difference in this is the way that the data is outputed and how the empties should be setup. Each gear part for this section should have at least two empties; One of these is for the position of the gear around which it will pivot and the other for the collision point of the gear. The empty/object used for the collision point has to be parented to the position/pivot point. For objects that do not have a parent a possition will be printed, however if an object.empty does have a parent, it will print the name of the parent as well as a collision point.
+This is mostly the same as the previous section however there is no option for mirroring. The collection selection and "Rounding D.P" functions identically to the previous section. The main difference in this is the way that the data is output and how the empties should be setup. Each gear part for this section should have at least two empties; One of these is for the position of the gear around which it will pivot and the other for the collision point of the gear. The empty/object used for the collision point has to be parented to the position/pivot point. For objects that do not have a parent a position will be printed, however if an object/empty does have a parent, it will print the name of the parent as well as a collision point.
 
 Lights:
-TBC
+Lights are currently only able to be generated one at a time. For each light that is generated, a name has to be initially set which can be any name. After that, an object is required to determine the position of the light. This also uses the global position and does not consider any parent/children and when the position is printed in the output, it is rounded to the "Decimal D.P." which functions in the same way as it does for the collisions. The main unique feature in lights is the different settings that have to be chose, the type of light which determines the animation that the light has. Each of these has a tool tip that describes biefly what the light will do. The second setting is the colour, of which there are three. At the moment only basic lights are supported but more may be added in the future, if there are any specific ones please create a feature request for them in the issues.
 
 Instruments:
-TBC
+Instruments function similarly to the lights in terms of which settings have to be set. 
 
-Utilies and Output:
-In the utlities section there is currently only one option, that being a short cut for toggleing the system console.
+Utilities and Output:
+In the utilities section there is currently only one option, that being a short cut for toggling the system console.
 **The system console is where all outputs are found**.
-Once this is open you will see the output of all the operaitions you have carried out, or any errors that have occured while trying to generate them.
+Once this is open you will see the output of all the operations you have carried out, or any errors that have occurred while trying to generate them.
 
-Output formating:
-All of the output arrays are formated to be ready to use in GeoFS out of the box. There should be no issues with parts being in the wrong possition or please report the issue.
+Output formatting:
+All of the output arrays are formatted to be ready to use in GeoFS out of the box. There should be no issues with parts being in the wrong position or please report the issue.
